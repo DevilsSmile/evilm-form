@@ -32,8 +32,6 @@ module.exports = function (scriptCode) {
             i = i - 1
         }
     }
-    // [ 'import axios from axios', "import emTransform from '../utils/emTransform/transform.js'" ]
-    // console.log(importList)
 
     // exportDefault
     let exportDefaultCode = scriptCode.match(/export default[\s\S]+/gi)[0].replace('export default', '').replace('</script>', '').trim()
@@ -66,19 +64,19 @@ module.exports = function (scriptCode) {
         }
     }
 
-
     // 通过二分法配对对象括号
     let matchResult = []
-    let matchBuffer = beginBraceIndex
-    let matchIndex = Math.floor(matchBuffer.length / 2)
+    let halfArrayBeginIndex = 0
+    let halfArrayEndIndex = beginBraceIndex.length
+    let matchIndex = Math.floor((halfArrayEndIndex - halfArrayBeginIndex) / 2)
 
     for (let i = 0, l = endBraceIndex.length; i < l; i++) {
-        // {...{...{...}...}...}
-        if (matchIndex === 0 || matchIndex === 1) {
-            matchResult.push({ beginBrace: matchBuffer[matchBuffer.length - 1], endBrace: endBraceIndex[i] })
+        // {...{...}...}
+        if (matchIndex === 0) {
+            matchResult.push({ beginBrace: beginBraceIndex[beginBraceIndex.length - 1], endBrace: endBraceIndex[i] })
             beginBraceIndex.pop()
-            matchBuffer = beginBraceIndex
-            matchIndex = Math.floor(matchBuffer.length / 2)
+            beginBraceIndex = beginBraceIndex
+            matchIndex = Math.floor(beginBraceIndex.length / 2)
             continue
         }
 
@@ -94,15 +92,29 @@ module.exports = function (scriptCode) {
                 matchResult.push({ beginBrace: beginBraceIndex[matchIndex], endBrace: endBraceIndex[i] })
                 beginBraceIndex.splice(matchIndex, 1)
 
-                matchBuffer = beginBraceIndex
-                matchIndex = Math.floor(matchBuffer.length / 2)
+                // 重置搜索范围
+                halfArrayBeginIndex = 0
+                halfArrayEndIndex = beginBraceIndex.length
+                matchIndex = Math.floor((halfArrayEndIndex - halfArrayBeginIndex) / 2)
+                continue
+            }
+
+            // {...{...}...}
+            if (matchIndex === beginBraceIndex.length - 1) {
+                matchResult.push({ beginBrace: beginBraceIndex[matchIndex], endBrace: endBraceIndex[i] })
+                beginBraceIndex.splice(matchIndex, 1)
+
+                // 重置搜索范围
+                halfArrayBeginIndex = 0
+                halfArrayEndIndex = beginBraceIndex.length
+                matchIndex = Math.floor((halfArrayEndIndex - halfArrayBeginIndex) / 2)
                 continue
             }
 
             // {...{...}
             if (beginBraceIndex[matchIndex + 1] < endBraceIndex[i]) {
-                matchBuffer = matchBuffer.slice(matchIndex, matchBuffer.length)
-                matchIndex = Math.floor(matchBuffer.length / 2)
+                halfArrayBeginIndex = matchIndex
+                matchIndex = halfArrayBeginIndex + Math.floor((halfArrayEndIndex - halfArrayBeginIndex) / 2)
                 i = i - 1
                 continue
             }
@@ -110,18 +122,16 @@ module.exports = function (scriptCode) {
 
         // if }...{
         if (endBraceIndex[i] < beginBraceIndex[matchIndex]) {
-            matchBuffer = matchBuffer.slice(0, matchIndex)
-            matchIndex = Math.floor(matchBuffer.length / 2)
+            halfArrayEndIndex = matchIndex
+            matchIndex = halfArrayBeginIndex + Math.floor((halfArrayEndIndex - halfArrayBeginIndex) / 2)
             i = i - 1
             continue
         }
     }
-    // let vueScriptObject = {}
-    // let depth = 0
-    // let waitingClose = 0
-    // for (let i = 0, l = beginBraceIndex.length; i < l; i++) {
 
-    // }
+    matchResult.sort((a, b) => {
+        return a.beginBrace - b.beginBrace
+    })
     console.log('complete')
     console.log(matchResult)
 }

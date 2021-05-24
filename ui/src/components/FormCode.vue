@@ -51,29 +51,21 @@ export default {
         return {
             emformRaw: {
                 name: '',
-                region: 'asdsd{asdasd}',
-                date1: '',
-                date2: '',
-                delivery: false,
-                type: [],
-                resource: '',
-                desc: '',
+                region: 'asdsd{asdasd',
+                type: '123123123'
             },
             emformRule: {
-                name: '',
-                region: '',
-                date1: '',
-                date2: '',
-                delivery: '',
-                type: 'arrayToJoinStringComma',
-                resource: '',
-                desc: '',
+                name: { a: '', b: () => {}},
+                b: '',
             },
         };
     },
     methods: {
         onSubmit() {
-            console.log(emTransform(this.emformRaw, this.emformRule))
+            console.log(emTransform())
+        },
+        onSubmitTow() {
+            console.log(emTransform())
         },
     },
 }
